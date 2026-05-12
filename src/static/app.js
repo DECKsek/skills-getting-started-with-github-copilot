@@ -27,6 +27,60 @@ document.addEventListener("DOMContentLoaded", () => {
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
         `;
 
+        const participantsWrapper = document.createElement("div");
+        participantsWrapper.className = "participants";
+
+        const participantsTitle = document.createElement("p");
+        participantsTitle.innerHTML = "<strong>Participants:</strong>";
+        participantsWrapper.appendChild(participantsTitle);
+
+        if (details.participants.length > 0) {
+          const participantsList = document.createElement("div");
+          participantsList.className = "participants-list";
+          details.participants.forEach((participant) => {
+            const participantItem = document.createElement("div");
+            participantItem.className = "participant-item";
+            
+            const participantName = document.createElement("span");
+            participantName.className = "participant-name";
+            participantName.textContent = participant;
+            
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "delete-btn";
+            deleteBtn.textContent = "🗑️";
+            deleteBtn.title = "Remove participant";
+            deleteBtn.addEventListener("click", async (e) => {
+              e.preventDefault();
+              try {
+                const response = await fetch(
+                  `/activities/${encodeURIComponent(name)}/unregister?email=${encodeURIComponent(participant)}`,
+                  { method: "POST" }
+                );
+                if (response.ok) {
+                  fetchActivities();
+                } else {
+                  const error = await response.json();
+                  alert(error.detail || "Failed to remove participant");
+                }
+              } catch (error) {
+                alert("Failed to remove participant");
+                console.error("Error removing participant:", error);
+              }
+            });
+            
+            participantItem.appendChild(participantName);
+            participantItem.appendChild(deleteBtn);
+            participantsList.appendChild(participantItem);
+          });
+          participantsWrapper.appendChild(participantsList);
+        } else {
+          const noParticipants = document.createElement("p");
+          noParticipants.className = "info";
+          noParticipants.textContent = "No participants yet. Be the first to sign up!";
+          participantsWrapper.appendChild(noParticipants);
+        }
+
+        activityCard.appendChild(participantsWrapper);
         activitiesList.appendChild(activityCard);
 
         // Add option to select dropdown
@@ -62,6 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
